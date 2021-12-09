@@ -14,6 +14,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <marti_sensor_msgs/Velocity.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/Odometry.h>
@@ -24,6 +25,7 @@
 #include <pcl/point_types.h>
 #include <svo/global.h>
 #include <svo/common/types.h>
+#include <boost/circular_buffer.hpp>
 
 #ifdef SVO_LOOP_CLOSING
 #include <svo/online_loopclosing/keyframe.h>
@@ -61,6 +63,9 @@ public:
   size_t img_pub_nth_;
   size_t dense_pub_nth_;
   bool viz_caption_str_;
+  ros::Time last_pose_time_;
+  geometry_msgs::PoseStampedPtr prev_pose_;
+  boost::circular_buffer<double> velocity_buffer_;
 
   ros::Publisher pub_frames_;
   ros::Publisher pub_points_;
@@ -72,6 +77,7 @@ public:
   std::vector<ros::Publisher> pub_cam_poses_;
   std::vector<ros::Publisher> pub_dense_;
   std::vector<image_transport::Publisher> pub_images_;
+  ros::Publisher pub_cam_vel_;
 
   tf::TransformBroadcaster br_;
   bool publish_world_in_cam_frame_;
@@ -179,6 +185,10 @@ public:
   void publishSeedsUncertainty(const MapPtr& map);
 
   void visualizeCoordinateFrames(const Transformation& T_world_cam);
+
+  double calculateMagnitude(const geometry_msgs::Point point);
+
+  double calculateVariance();
 
 #ifdef SVO_LOOP_CLOSING
   void publishLoopClosureInfo(

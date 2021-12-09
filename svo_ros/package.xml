@@ -19,28 +19,29 @@
   <depend>eigen_catkin</depend>
   <depend>eigen_checks</depend>
   <depend>image_transport</depend>
-  <depend>nodelet</depend>
-  <depend>roscpp</depend>
+  <depend>marti_common_msgs</depend>
   <depend>minkindr</depend>
   <depend>nav_msgs</depend>
+  <depend>nodelet</depend>
   <depend>pcl_ros</depend>
+  <depend>roscpp</depend>
   <depend>rpg_common</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>svo</depend>
-  <depend>svo_cmake</depend>
-  <depend>svo_common</depend>
-  <depend>svo_msgs</depend>
-  <depend>svo_tracker</depend>
   <depend>svo_backend</depend>
   <depend>svo_ceres_backend</depend>
-  <depend>svo_online_loopclosing</depend>
+  <depend>svo_cmake</depend>
+  <depend>svo_common</depend>
   <depend>svo_global_map</depend>
+  <depend>svo_msgs</depend>
+  <depend>svo_online_loopclosing</depend>
+  <depend>svo_tracker</depend>
   <depend>tf</depend>
   <depend>vikit_common</depend>
   <depend>vikit_ros</depend>
   <depend>visualization_msgs</depend>
-  
+
   <export>
     <nodelet plugin="${prefix}/svo_nodelet.xml"/>
   </export>

@@ -189,6 +189,10 @@ Visualizer::Visualizer(const std::string& trace_dir,
         "pose_cam/" + std::to_string(i), 10);
   }
 
+  // Setup Velocity publisher
+  pub_cam_vel_ = pnh_.advertise<marti_sensor_msgs::Velocity>("vel_cam", 10);
+  velocity_buffer_.set_capacity(50);
+
 #ifdef SVO_LOOP_CLOSING
   pose_graph_map_.clear();
   pose_graph_map_.header.frame_id = kWorldFrame;
@@ -299,7 +303,46 @@ void Visualizer::publishCameraPoses(const FrameBundlePtr& frame_bundle,
     msg_pose->pose.orientation.z = q.z();
     msg_pose->pose.orientation.w = q.w();
     pub_cam_poses_.at(i).publish(msg_pose);
+
+    // Dont perform calculation if prev pose has not been set
+    if (!prev_pose_)
+    {
+      marti_sensor_msgs::VelocityPtr vel_msg = boost::make_shared<marti_sensor_msgs::Velocity>();
+      vel_msg->header.stamp = ros::Time().fromNSec(timestamp_nanoseconds);
+      geometry_msgs::Point point;
+      double dt = (ros::Time().fromNSec(timestamp_nanoseconds) - last_pose_time_).toSec();
+      point.x = (p[0] - prev_pose_->pose.position.x) / dt;
+      point.y = (p[1] - prev_pose_->pose.position.y) / dt;
+      point.z = (p[2] - prev_pose_->pose.position.z) / dt;
+      vel_msg->velocity = calculateMagnitude(point);
+      vel_msg->variance = calculateVariance();
+      velocity_buffer_.push_back(vel_msg->velocity);
+      pub_cam_vel_.publish(vel_msg);
+    }
+    // Set last pose and time for vel calculation
+    last_pose_time_ = ros::Time().fromNSec(timestamp_nanoseconds);
+    prev_pose_ = msg_pose;
   }
+}
+
+double Visualizer::calculateVariance()
+{
+  double average = std::accumulate(velocity_buffer_.begin(), velocity_buffer_.end(), 0.0) / velocity_buffer_.size();
+  std::vector<double> sq_diff;
+  sq_diff.resize(velocity_buffer_.size());
+  double sum_sq = 0; // sum of the squares of vel
+  for(auto& vel : velocity_buffer_)
+  {
+    sum_sq += pow((vel - average),2);
+  }
+  return (sum_sq / velocity_buffer_.size());
+}
+
+double Visualizer::calculateMagnitude(const geometry_msgs::Point point)
+{
+  return std::sqrt(std::pow(point.x,2)
+      + std::pow(point.y,2)
+      + std::pow(point.z,2));
 }
 
 void Visualizer::publishBundleFeatureTracks(const FrameBundlePtr frames_ref,
